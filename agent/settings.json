@@ -1,0 +1,15 @@
+{
+  "packages": [
+    "npm:pi-open-tui",
+    "npm:@narumitw/pi-usage",
+    "npm:pi-web-search"
+  ],
+  "lastChangelogVersion": "0.85.1",
+  "theme": "dark",
+  "defaultProvider": "github-copilot",
+  "defaultModel": "gpt-5.6-luna",
+  "tuiMode": "fullscreen",
+  "terminal": {
+    "showTerminalProgress": true
+  }
+}
