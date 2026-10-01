@@ -6,8 +6,8 @@
     "npm:pi-btw",
     "npm:@narumitw/pi-plan-mode"
   ],
-  "lastChangelogVersion": "0.87.1",
-  "theme": "dark",
+  "lastChangelogVersion": "0.99.2",
+  "theme": "system",
   "defaultProvider": "github-copilot",
   "defaultModel": "gpt-5.6-luna",
   "tuiMode": "fullscreen",
