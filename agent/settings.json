@@ -3,7 +3,6 @@
     "npm:pi-open-tui",
     "npm:@narumitw/pi-usage",
     "npm:pi-web-search",
-    "npm:pi-mcp-adapter",
     "npm:pi-btw",
     "npm:@narumitw/pi-plan-mode"
   ],
