@@ -18,12 +18,18 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { RefreshModelsContext } from "@earendil-works/pi-ai";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const PROVIDERS_FILE = join(getAgentDir(), "providers.json");
+const AGENT_DIR = getAgentDir();
+const PROVIDERS_FILE = join(AGENT_DIR, "providers.json");
+const MODELS_STORE_FILE = join(AGENT_DIR, "models-store.json");
 const DEFAULT_CONTEXT_WINDOW = 400_000;
 const DEFAULT_MAX_TOKENS = 16_384;
-const MODEL_FETCH_TIMEOUT_MS = 2_000;
+// The first Node fetch can include DNS/TLS/connection setup and be noticeably slower
+// than a warm curl request. Keep this below the model-picker's global timeout while
+// allowing a cold connection to complete.
+const MODEL_FETCH_TIMEOUT_MS = 10_000;
 const AXONHUB_MODELS_INCLUDE = "name,context_length,max_output_tokens,capabilities";
 
 interface ProviderEntry {
@@ -43,6 +49,7 @@ interface RemoteModel {
 	max_output_tokens?: unknown;
 	capabilities?: {
 		reasoning?: unknown;
+		vision?: unknown;
 	};
 }
 
@@ -50,7 +57,7 @@ interface PiModel {
 	id: string;
 	name: string;
 	reasoning: boolean;
-	input: ["text"];
+	input: ("text" | "image")[];
 	cost: {
 		input: number;
 		output: number;
@@ -63,6 +70,94 @@ interface PiModel {
 	compat?: {
 		supportsReasoningEffort?: boolean;
 	};
+}
+
+interface PersistedPiModel extends PiModel {
+	api: "openai-completions";
+	provider: string;
+	baseUrl: string;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+	return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function positiveNumber(value: unknown, fallback: number): number {
+	return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function toCachedModel(value: unknown, providerId: string): PiModel | undefined {
+	const model = asRecord(value);
+	if (!model || model.provider !== providerId || typeof model.id !== "string" || !model.id.trim()) return undefined;
+
+	const input = Array.isArray(model.input)
+		? model.input.filter((value): value is "text" | "image" => value === "text" || value === "image")
+		: [];
+	const cost = asRecord(model.cost);
+	const thinkingLevelMap = asRecord(model.thinkingLevelMap);
+	const compat = asRecord(model.compat);
+
+	return {
+		id: model.id,
+		name: typeof model.name === "string" && model.name.trim() ? model.name : model.id,
+		reasoning: model.reasoning === true,
+		input: input.length > 0 ? input : ["text"],
+		cost: {
+			input: typeof cost?.input === "number" ? cost.input : 0,
+			output: typeof cost?.output === "number" ? cost.output : 0,
+			cacheRead: typeof cost?.cacheRead === "number" ? cost.cacheRead : 0,
+			cacheWrite: typeof cost?.cacheWrite === "number" ? cost.cacheWrite : 0,
+		},
+		contextWindow: positiveNumber(model.contextWindow, DEFAULT_CONTEXT_WINDOW),
+		maxTokens: positiveNumber(model.maxTokens, DEFAULT_MAX_TOKENS),
+		...(thinkingLevelMap
+			? {
+					thinkingLevelMap: Object.fromEntries(
+						Object.entries(thinkingLevelMap).filter(
+							([, value]) => typeof value === "string" || value === null,
+						),
+					),
+				}
+			: {}),
+		...(compat?.supportsReasoningEffort === true ? { compat: { supportsReasoningEffort: true } } : {}),
+	};
+}
+
+function modelsFromStored(
+	providerId: string,
+	stored: RefreshModelsContext["stored"],
+): PiModel[] {
+	if (!stored) return [];
+	return stored.models
+		.map((model) => toCachedModel(model, providerId))
+		.filter((model): model is PiModel => model !== undefined);
+}
+
+async function readCachedModels(providerId: string): Promise<PiModel[]> {
+	try {
+		const content = await readFile(MODELS_STORE_FILE, "utf8");
+		const root = asRecord(JSON.parse(content));
+		const entry = asRecord(root?.[providerId]);
+		if (!entry || !Array.isArray(entry.models)) return [];
+
+		return entry.models
+			.map((model) => toCachedModel(model, providerId))
+			.filter((model): model is PiModel => model !== undefined);
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+			console.error(`[providers] Failed to read cached models for "${providerId}":`, error);
+		}
+		return [];
+	}
+}
+
+function toPersistedModels(providerId: string, provider: ProviderEntry, models: PiModel[]): PersistedPiModel[] {
+	return models.map((model) => ({
+		...model,
+		api: "openai-completions",
+		provider: providerId,
+		baseUrl: provider.url,
+	}));
 }
 
 async function ensureProvidersFile(): Promise<void> {
@@ -118,12 +213,13 @@ function toModel(model: RemoteModel, type?: ProviderEntry["type"]): PiModel | un
 			? model.max_output_tokens
 			: DEFAULT_MAX_TOKENS;
 	const reasoning = type === "axonhub" && model.capabilities?.reasoning !== false;
+	const supportsVision = type === "axonhub" && model.capabilities?.vision === true;
 
 	return {
 		id: model.id,
 		name,
 		reasoning,
-		input: ["text"],
+		input: supportsVision ? ["text", "image"] : ["text"],
 		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
 		contextWindow,
 		maxTokens,
@@ -185,6 +281,41 @@ async function fetchModels(provider: ProviderEntry, signal?: AbortSignal): Promi
 	}
 }
 
+function createRefreshModels(providerId: string, provider: ProviderEntry, initialModels: PiModel[]) {
+	let knownModels = [...initialModels];
+
+	return async (context: RefreshModelsContext): Promise<PiModel[]> => {
+		const restoredModels = modelsFromStored(providerId, context.stored);
+		if (restoredModels.length > 0) knownModels = restoredModels;
+
+		// Pi performs a cache-only refresh during startup and after provider registration.
+		// Do not turn that phase into another network request.
+		if (!context.allowNetwork || context.signal.aborted) return knownModels;
+
+		try {
+			const refreshedModels = await fetchModels(provider, context.signal);
+			if (context.signal.aborted) return knownModels;
+
+			const published = await context.publish({
+				persist: {
+					models: toPersistedModels(providerId, provider, refreshedModels),
+					checkedAt: Date.now(),
+				},
+			});
+			if (!published) return knownModels;
+
+			knownModels = refreshedModels;
+			return refreshedModels;
+		} catch (error) {
+			if (!context.signal.aborted) {
+				console.error(`[providers] Failed to refresh "${providerId}":`, error);
+			}
+			// A failed refresh must not make a previously visible catalog disappear.
+			return knownModels;
+		}
+	};
+}
+
 function validateProvider(providerId: string, provider: unknown): asserts provider is ProviderEntry {
 	if (!provider || typeof provider !== "object" || Array.isArray(provider)) {
 		throw new Error(`provider "${providerId}" must be an object`);
@@ -205,6 +336,28 @@ function validateProvider(providerId: string, provider: unknown): asserts provid
 	}
 }
 
+async function registerConfiguredProvider(
+	pi: ExtensionAPI,
+	providerId: string,
+	provider: ProviderEntry,
+): Promise<void> {
+	// Registration must not wait for a cold network connection. The model picker
+	// (or the session-start refresh below) will discover models asynchronously.
+	const models = await readCachedModels(providerId);
+
+	pi.registerProvider(providerId, {
+		baseUrl: provider.url,
+		apiKey: provider.apiKey,
+		api: "openai-completions",
+		models,
+		refreshModels: createRefreshModels(providerId, provider, models),
+	});
+}
+
+function isOfflineMode(): boolean {
+	return /^(1|true|yes)$/i.test(process.env.PI_OFFLINE ?? "");
+}
+
 export default async function (pi: ExtensionAPI) {
 	let config: ProvidersFile;
 	try {
@@ -214,22 +367,43 @@ export default async function (pi: ExtensionAPI) {
 		return;
 	}
 
+	const providerIds: string[] = [];
 	await Promise.all(
 		Object.entries(config.providers ?? {}).map(async ([providerId, provider]) => {
 			try {
 				validateProvider(providerId, provider);
-				const models = await fetchModels(provider);
-
-				pi.registerProvider(providerId, {
-					baseUrl: provider.url,
-					apiKey: provider.apiKey,
-					api: "openai-completions",
-					models,
-					refreshModels: ({ signal }) => fetchModels(provider, signal),
-				});
+				await registerConfiguredProvider(pi, providerId, provider);
+				providerIds.push(providerId);
 			} catch (error) {
 				console.error(`[providers] Failed to register "${providerId}":`, error);
 			}
 		}),
 	);
+
+	if (providerIds.length === 0) return;
+
+	let backgroundRefreshStarted = false;
+	pi.on("session_start", (_event, ctx) => {
+		if (
+			backgroundRefreshStarted ||
+			isOfflineMode() ||
+			(ctx.mode !== "tui" && ctx.mode !== "rpc")
+		) {
+			return;
+		}
+		backgroundRefreshStarted = true;
+
+		// Keep startup responsive. The model picker also performs this refresh when
+		// opened, and Pi's provider refresh generations prevent stale publications.
+		void ctx.modelRegistry
+			.refresh({ providers: providerIds })
+			.then((result) => {
+				for (const [providerId, error] of result.errors) {
+					console.error(`[providers] Background refresh failed for "${providerId}":`, error);
+				}
+			})
+			.catch((error) => {
+				console.error("[providers] Background model refresh failed:", error);
+			});
+	});
 }
