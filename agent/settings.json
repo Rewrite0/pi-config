@@ -6,7 +6,7 @@
     "npm:pi-btw",
     "npm:@narumitw/pi-plan-mode"
   ],
-  "lastChangelogVersion": "1.1.0",
+  "lastChangelogVersion": "1.4.0",
   "theme": "system",
   "defaultProvider": "github-copilot",
   "defaultModel": "gpt-5.6-luna",
@@ -14,5 +14,6 @@
   "terminal": {
     "showTerminalProgress": true
   },
-  "hideThinkingBlock": true
+  "hideThinkingBlock": true,
+  "defaultThinkingLevel": "high"
 }
