@@ -3,3 +3,5 @@ sessions
 auth.json
 models-store.json
 trust.json
+pi-web-access
+web-search-cache

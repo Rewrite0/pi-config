@@ -2,11 +2,12 @@
   "packages": [
     "npm:pi-open-tui",
     "npm:@narumitw/pi-usage",
-    "npm:pi-web-search",
     "npm:pi-btw",
-    "npm:@narumitw/pi-plan-mode"
+    "npm:@narumitw/pi-plan-mode",
+    "npm:pi-web-access",
+    "npm:pi-subagents-lite"
   ],
-  "lastChangelogVersion": "1.4.0",
+  "lastChangelogVersion": "1.5.0",
   "theme": "system",
   "defaultProvider": "github-copilot",
   "defaultModel": "gpt-5.6-luna",
@@ -15,5 +16,14 @@
     "showTerminalProgress": true
   },
   "hideThinkingBlock": true,
-  "defaultThinkingLevel": "high"
+  "defaultThinkingLevel": "high",
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.2",
+    "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.2",
+    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.59.6",
+    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0"
+  },
+  "defaultTools": [
+    "+codemode"
+  ]
 }

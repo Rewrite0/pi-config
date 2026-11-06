@@ -1,0 +1,24 @@
+{
+  "tavilyApiKey": "$TAVILY_API_KEY",
+  "deepseekApiKey": "$DEEPSEEK_API_KEY",
+  "ssrf": {
+    "allowRanges": [
+      "198.18.0.0/15"
+    ]
+  },
+  "searchRouting": {
+    "providers": [
+      "tavily",
+      "exa",
+      "duckduckgo",
+      "deepseek"
+    ],
+    "fallbackOn": [
+      "transient",
+      "quota",
+      "network",
+      "invalid-response",
+      "empty"
+    ]
+  }
+}
