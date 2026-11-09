@@ -18,9 +18,9 @@
   "hideThinkingBlock": true,
   "defaultThinkingLevel": "high",
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.2",
+    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.4",
     "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.2",
-    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.59.6",
+    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.60.0",
     "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0"
   },
   "defaultTools": [
