@@ -5,7 +5,9 @@
     "npm:pi-btw",
     "npm:@narumitw/pi-plan-mode",
     "npm:pi-web-access",
-    "npm:pi-subagents-lite"
+    "npm:pi-subagents-lite",
+    "npm:pi-goal-x",
+    "npm:@99percentpeople/pi-background-tasks"
   ],
   "lastChangelogVersion": "1.5.2",
   "theme": "system",
@@ -18,9 +20,9 @@
   "hideThinkingBlock": true,
   "defaultThinkingLevel": "high",
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.4",
-    "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.2",
-    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.60.0",
+    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.5",
+    "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.3",
+    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.60.1",
     "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0"
   },
   "defaultTools": [

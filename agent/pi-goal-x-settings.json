@@ -1,0 +1,6 @@
+{
+  "disabled": false,
+  "provider": "axonhub",
+  "model": "gpt-6.1-sol",
+  "thinking_level": "high"
+}
