@@ -1,6 +1,7 @@
 {
   "agent": {
     "systemPromptMode": "replace",
-    "Explore": "github-copilot/gpt-5.6-luna"
+    "Explore": "github-copilot/gpt-5.6-luna",
+    "Reviewer": "axonhub/gpt-6.1-sol"
   }
 }
