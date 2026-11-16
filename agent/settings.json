@@ -21,7 +21,7 @@
   "hideThinkingBlock": true,
   "defaultThinkingLevel": "high",
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.5",
+    "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.6",
     "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.3",
     "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.60.1",
     "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
