@@ -7,8 +7,7 @@
     "npm:pi-web-access",
     "npm:pi-subagents-lite",
     "npm:pi-goal-x",
-    "npm:@99percentpeople/pi-background-tasks",
-    "npm:@estebanforge/pi-antigravity-bridge"
+    "npm:@99percentpeople/pi-background-tasks"
   ],
   "lastChangelogVersion": "1.5.2",
   "theme": "system",
@@ -23,9 +22,9 @@
   "extensionChangelogVersions": {
     "{\"source\":\"npm:pi-open-tui\",\"scope\":\"user\"}": "0.4.6",
     "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.3",
-    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.60.1",
-    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
-    "{\"source\":\"npm:@estebanforge/pi-antigravity-bridge\",\"scope\":\"user\"}": "1.10.6"
+    "{\"source\":\"npm:@narumitw/pi-plan-mode\",\"scope\":\"user\"}": "0.60.3",
+    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.48.0",
+    "{\"source\":\"npm:@estebanforge/pi-antigravity-bridge\",\"scope\":\"user\"}": "1.10.7"
   },
   "defaultTools": [
     "+codemode"
